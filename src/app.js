@@ -2,19 +2,24 @@ const express = require("express");
 const { connectDB } = require("./config/database.js");
 const User = require("./models/user.js");
 const bcrypt = require("bcrypt");
+const cookiePareser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 const app = express();
+const Auth=require('./middlewares/auth.js')
+const {userAuth}=Auth;
 app.use(express.json());
+app.use(cookiePareser());
 app.post("/signup", async (req, res) => {
-  const {emailId,password,firstName,lastName}=req.body;
+  const { emailId, password, firstName, lastName } = req.body;
   try {
-   const password= req.body.password;
-   const passwordhash=await bcrypt.hash(password,10);
-   const user = new User({
-    emailId,
-    password:passwordhash,
-    firstName,
-    lastName}
-   );
+    const password = req.body.password;
+    const passwordhash = await bcrypt.hash(password, 10);
+    const user = new User({
+      emailId,
+      password: passwordhash,
+      firstName,
+      lastName,
+    });
     await user.save();
     res.send("Data send succesfully");
   } catch (err) {
@@ -30,78 +35,30 @@ app.post("/login", async (req, res) => {
       throw new Error("Invalid credentials");
     }
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    if(isPasswordValid){
-        res.send("Invalid credentials");
+    if (isPasswordValid) {
+      const token = jwt.sign({ _id: user._id }, "bhavya@ganaa210");
 
-    }
-    else if(!isPasswordValid){
-        throw new Error("Inavlid Password");
+      res.cookie("token", token, {
+        httpOnly: true,
+      });
+      res.send("succesfull");
+    } else if (!isPasswordValid) {
+      throw new Error("Inavlid Password");
     }
   } catch (error) {
     res.status(400).send(error.message);
   }
 });
-app.get("/feed", async (req, res) => {
+app.get("/profile",userAuth, async (req, res) => {
   try {
-    const users = await User.find({});
-    res.status(200).send(users);
+
+    res.send(req.user);
   } catch (error) {
-    res.status(400).send("Something Went Wrong ," + error.message);
+    res.send(error.message);
   }
 });
 
-app.delete("/user", async (req, res) => {
-  try {
-    const id = req.body._id;
-    const user = await User.findByIdAndDelete(id);
-    if (!user) {
-      res.status(400).send("UserId inavlid");
-    } else {
-      res.send("User deleted Succesfully");
-    }
-  } catch (err) {
-    res.status(500).send(err);
-  }
-});
 
-app.get("/user", async (req, res) => {
-  try {
-    const email = req.body.emailId;
-    const users = await User.find({ emailId: email });
-    res.status(200).send(user);
-  } catch (err) {
-    res.status(400).send("Something went Wrong" + err.message);
-  }
-});
-
-app.patch("/user", async (req, res) => {
-  try {
-    const { _id, ...data } = req.body;
-
-    const ALLOWED_UPDATES = ["about", "skills"];
-
-    const isUpdateAllowed = Object.keys(data).every((key) =>
-      ALLOWED_UPDATES.includes(key),
-    );
-
-    if (!isUpdateAllowed) {
-      return res.status(400).send("Update Not Allowed");
-    }
-
-    const user = await User.findByIdAndUpdate(_id, data, {
-      runValidators: true,
-      new: true,
-    });
-
-    if (!user) {
-      throw new Error("Update not allowed");
-    }
-
-    res.send("Updated Successfully");
-  } catch (error) {
-    res.status(400).send(error.message);
-  }
-});
 
 connectDB()
   .then(async () => {
