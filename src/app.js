@@ -7,9 +7,16 @@ const authRouter=require('./routes/auth.js');
 const profileRouter=require('./routes/profile.js');
 const requestRouter=require('./routes/requests.js');
 const userRouter=require('./routes/user.js')
+const cors=require('cors');
 
 app.use(express.json());
 app.use(cookiePareser());
+app.use(
+  cors({
+    origin: "http://localhost:5173", // frontend URL
+    credentials: true,
+  })
+);
 app.use('/',authRouter);
 app.use('/',profileRouter);
 app.use('/',requestRouter);

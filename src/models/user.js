@@ -70,6 +70,9 @@ const userSchema = new mongoose.Schema(
         message: "You can add a maximum of 10 skills",
       },
     },
+    about:{
+      type:String
+    }
   },
   {
     timestamps: true,
@@ -78,7 +81,7 @@ const userSchema = new mongoose.Schema(
 
 userSchema.methods.getJWT=async function(){
     const user=this;
-    const token =await jwt.sign({_id:user._id},process.env.JWT_SECRET,{
+    const token = jwt.sign({_id:user._id},process.env.JWT_SECRET,{
         expiresIn:'1d'
     }
     );

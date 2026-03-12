@@ -7,20 +7,36 @@ const env=require('dotenv');
 const { ignore } = require('nodemon/lib/rules/index.js');
 
 authRouter.post("/signup", async (req, res) => {
-  const { emailId, password, firstName, lastName } = req.body;
+  const { emailId, password, firstName, lastName, age, gender, about } = req.body;
+
   try {
-    const password = req.body.password;
     const passwordhash = await bcrypt.hash(password, 10);
+
     const user = new User({
       emailId,
       password: passwordhash,
       firstName,
       lastName,
+      age,
+      gender,
+      about
     });
-    await user.save();
-    res.send("Data send succesfully");
+
+    const savedUser = await user.save();
+
+    const token = await savedUser.getJWT();
+
+    res.cookie("token", token, {
+      httpOnly: true
+    });
+
+    res.json({
+      message: "Signup successfully!!",
+      data: savedUser
+    });
+
   } catch (err) {
-    res.status(400).send("Error sending data" + err.message);
+    res.status(400).send("Error sending data " + err.message);
   }
 });
 
@@ -39,7 +55,7 @@ authRouter.post("/login", async (req, res) => {
       res.cookie("token", token, {
         httpOnly: true,
       });
-      res.send("succesfull");
+      res.send(user);
     } else if (!isPasswordValid) {
       throw new Error("Inavlid Password");
     }

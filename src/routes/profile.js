@@ -12,6 +12,7 @@ profileRouter.get("/profile/view",userAuth, async (req, res) => {
 });
 
 profileRouter.patch('/profile/edit',userAuth,async(req,res)=>{
+  try{
   if(!validateEditProfileData(req)){
     throw new Error("This cannot be Updated");
   }
@@ -21,6 +22,14 @@ profileRouter.patch('/profile/edit',userAuth,async(req,res)=>{
   res.json({message:`${loggedInUser.firstName}, your profile updated sucessfully`,
     data:loggedInUser}
   );
+}
+catch(err){
+  if(err.name==="ValidationError"){
+    return res.status(400).send(err.message);
+  }
+  res.status(500).send(err.message)
+}
+
 })
 profileRouter.patch('/profile/forgotpassword',userAuth,async(req,res)=>{
   const user=req.user;
