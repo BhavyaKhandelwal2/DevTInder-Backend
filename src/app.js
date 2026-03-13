@@ -13,7 +13,8 @@ app.use(express.json());
 app.use(cookiePareser());
 app.use(
   cors({
-    origin: "http://localhost:5173", // frontend URL
+    origin: "http://16.16.253.195"
+, 
     credentials: true,
   })
 );
